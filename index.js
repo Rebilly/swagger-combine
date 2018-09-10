@@ -1,13 +1,15 @@
 const fetch = require('node-fetch');
 const fs = require('fs');
-const assert = require('assert').strict;
+const assert = require('assert');
+
+const { jsonDiff } = require('./diff');
 
 async function loadSpecs(specs) {
   try {
     return await Promise.all(
       specs.map(async specUrl => {
-        console.error(`Loading "${specUrl}"`)
-        return (await fetch(specUrl)).json()
+        console.error(`Loading "${specUrl}"`);
+        return (await fetch(specUrl)).json();
       })
     );
   } catch (e) {
@@ -23,12 +25,13 @@ function mergeStrictEqual(dest, src, type, srcName) {
         assert.deepStrictEqual(src[name], dest[name]);
       } catch (e) {
         console.error(
-          e.message.replace(
-            'Input A expected to strictly deep-equal input B:',
+          jsonDiff(
+            src[name],
+            dest[name],
             `${type} "${name}" from <${srcName}> expected to strictly deep-equal already existing ${type.toLowerCase()}`
           )
         );
-        console.error();
+        console.error('');
       }
     } else {
       dest[name] = src[name];
@@ -63,33 +66,30 @@ async function run(argv) {
   console.error('Start merging...\n');
   const merged = mergeSpecs(specs, urls);
   if (argv.output) {
-    fs.writeFileSync(argv.output, JSON.stringify(merged, null, 2))
+    fs.writeFileSync(argv.output, JSON.stringify(merged, null, 2));
     console.error(`Merged successfully to "${argv.output}"`);
   } else {
-    console.error(JSON.stringify(merged, null, 2));
+    console.log(JSON.stringify(merged, null, 2));
     console.error('Merged succesfully to STDOUT');
   }
-
 }
 
-const argv = require('yargs')
-  .command('* <baseSpec> [specs...]', '', argv => {
-    argv.positional('baseSpec', {
+const argv = require('yargs').command('* <baseSpec> [specs...]', '', argv => {
+  argv
+    .positional('baseSpec', {
       description: 'Base spec URL',
       type: 'string',
-      require: true
+      require: true,
     })
     .positional('specs', {
       description: 'List of spec URLs to merge',
-      type: 'string'
+      type: 'string',
     })
     .option('output', {
       alias: 'o',
       type: 'string',
-      description: 'Output filename, by default stdout will be used'
-    })
-  })
-
-  .argv
+      description: 'Output filename, by default stdout will be used',
+    });
+}).argv;
 
 run(argv);
