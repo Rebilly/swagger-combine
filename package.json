@@ -1,0 +1,18 @@
+{
+  "name": "@rebilly-ort/shallow-merge",
+  "version": "1.0.0",
+  "description": "Shallow merge swagger 2.0 specs",
+  "main": "index.js",
+  "author": "Roman Hotsiy",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.2.0",
+    "yargs": "^12.0.2"
+  },
+  "scripts": {
+    "rebilly-shallow-merge": "index.js"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  }
+}
