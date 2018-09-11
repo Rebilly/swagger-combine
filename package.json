@@ -1,7 +1,7 @@
 {
-  "name": "@rebilly-ort/shallow-merge",
+  "name": "@rebilly/swagger-combine",
   "version": "1.0.0",
-  "description": "Shallow merge swagger 2.0 specs",
+  "description": "Opinionated tool to shallow-merge two or more swagger 2.0 specs into one",
   "main": "index.js",
   "author": "Roman Hotsiy",
   "license": "MIT",
@@ -10,7 +10,7 @@
     "yargs": "^12.0.2"
   },
   "scripts": {
-    "rebilly-shallow-merge": "index.js"
+    "swagger-combine": "index.js"
   },
   "engines": {
     "node": ">=7.10.1"
