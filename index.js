@@ -39,7 +39,12 @@ function mergeStrictEqual(dest, src, type, srcName) {
   }
 }
 
-function mergeSpecs(specs, urls) {
+/**
+ * Shallow merge specs toghether
+ * @param urls string[] - list of spec URLs
+ */
+async function combineSpecs(urls) {
+  const specs = await loadSpecs(urls);
   const res = specs[0];
 
   for (let i = 1; i < specs.length; i++) {
@@ -62,9 +67,7 @@ function mergeSpecs(specs, urls) {
 
 async function run(argv) {
   const urls = [argv.baseSpec, ...(argv.specs || [])];
-  const specs = await loadSpecs(urls);
-  console.error('Start merging...\n');
-  const merged = mergeSpecs(specs, urls);
+  const merged = combineSpecs(urls);
   if (argv.output) {
     fs.writeFileSync(argv.output, JSON.stringify(merged, null, 2));
     console.error(`Merged successfully to "${argv.output}"`);
@@ -92,4 +95,8 @@ const argv = require('yargs').command('* <baseSpec> [specs...]', '', argv => {
     });
 }).argv;
 
-run(argv);
+if (require.main === module) {
+  run(argv);
+}
+
+module.combineSpecs = combineSpecs;
