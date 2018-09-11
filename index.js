@@ -69,7 +69,7 @@ async function combineSpecs(urls) {
 
 async function run(argv) {
   const urls = [argv.baseSpec, ...(argv.specs || [])];
-  const merged = combineSpecs(urls);
+  const merged = await combineSpecs(urls);
   if (argv.output) {
     fs.writeFileSync(argv.output, JSON.stringify(merged, null, 2));
     console.error(`Merged successfully to "${argv.output}"`);
