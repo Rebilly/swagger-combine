@@ -23,7 +23,11 @@ async function loadSpecs(specs) {
     return await Promise.all(
       specs.map(async specUrl => {
         console.error(`Loading "${specUrl}"`);
-        return (await fetch(specUrl)).json();
+        if (/^https?:\/\//i.test(specUrl)) {
+          return (await fetch(specUrl)).json();
+        } else {
+          return JSON.parse(fs.readFileSync(specUrl, 'utf-8'));
+        }
       })
     );
   } catch (e) {
