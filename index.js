@@ -6,6 +6,18 @@ const assert = require('assert');
 
 const { jsonDiff } = require('./diff');
 
+const OPENAPI3_COMPONENTS = [
+  'schemas',
+  'responses',
+  'parameters',
+  'examples',
+  'headers',
+  'requestBodies',
+  'links',
+  'callbacks',
+  'securitySchemes'
+];
+
 async function loadSpecs(specs) {
   try {
     return await Promise.all(
@@ -21,7 +33,7 @@ async function loadSpecs(specs) {
 }
 
 function mergeStrictEqual(dest, src, type, srcName) {
-  for (let name of Object.keys(src)) {
+  for (let name of Object.keys(src || {})) {
     if (dest[name]) {
       try {
         assert.deepStrictEqual(src[name], dest[name]);
@@ -48,23 +60,57 @@ function mergeStrictEqual(dest, src, type, srcName) {
 async function combineSpecs(urls) {
   const specs = await loadSpecs(urls);
   const res = specs[0];
+  const oasVersion = getSpecVersion(specs[0]);
 
   for (let i = 1; i < specs.length; i++) {
     const spec = specs[i];
     const specUrl = urls[i];
+    if (getSpecVersion(specs[i]) !== oasVersion) {
+      console.error(
+        'Specs has different versions: ' + oasVersion + ' and ' + getSpecVersion(specs[i])
+      );
+    }
+
     mergeStrictEqual(res.paths, spec.paths, 'Path', specUrl);
-    mergeStrictEqual(res.definitions, spec.definitions, 'Definition', specUrl);
-    mergeStrictEqual(res.responses, spec.responses, 'Response', specUrl);
-    mergeStrictEqual(res.parameters, spec.parameters, 'Parameter', specUrl);
-    mergeStrictEqual(
-      res.securityDefinitions,
-      spec.securityDefinitions,
-      'Security Definition',
-      specUrl
-    );
+
+    if (oasVersion.startsWith('3.')) {
+      if (!spec.components) {
+        continue;
+      }
+      if (!res.components) {
+        res.components = {};
+      }
+  
+      for (let componentName of OPENAPI3_COMPONENTS) {
+        if (!spec.components[componentName]) continue;
+        if (!res.components[componentName]) {
+          res.components[componentName] = {};
+        }
+        mergeStrictEqual(
+          res.components[componentName],
+          spec.components[componentName],
+          componentName,
+          specUrl
+        );
+      }
+    } else {
+      mergeStrictEqual(res.definitions, spec.definitions, 'Definition', specUrl);
+      mergeStrictEqual(res.responses, spec.responses, 'Response', specUrl);
+      mergeStrictEqual(res.parameters, spec.parameters, 'Parameter', specUrl);
+      mergeStrictEqual(
+        res.securityDefinitions,
+        spec.securityDefinitions,
+        'Security Definition',
+        specUrl
+      );
+    }
   }
 
   return res;
+}
+
+function getSpecVersion(spec) {
+  return (spec.openapi || spec.swagger || '').toString() || undefined;
 }
 
 async function run(argv) {
