@@ -18,9 +18,9 @@ or yarn:
 const { combineSpecs } = require('@rebilly/swagger-combine');
 
 const merged = combineSpecs([
-  'https://rebilly.github.io/RebillyAPI/swagger.json',
-  'https://rebilly.github.io/RebillyUserAPI/swagger.json',
-  'https://rebilly.github.io/RebillyReportsAPI/swagger.json',
+  'https://rebilly.github.io/RebillyAPI/openapi.json',
+  'https://rebilly.github.io/RebillyUserAPI/openapi.json',
+  'https://rebilly.github.io/RebillyReportsAPI/openapi.json',
 ]);
 ```
 
@@ -51,5 +51,5 @@ Options:
 Examples:
   [combine 3 specs]
     
-    swagger-combine -o merged.json https://rebilly.github.io/RebillyAPI/swagger.json https://rebilly.github.io/RebillyUserAPI/swagger.json https://rebilly.github.io/RebillyReportsAPI/swagger.json
+    swagger-combine -o merged.json https://rebilly.github.io/RebillyAPI/openapi.json https://rebilly.github.io/RebillyUserAPI/openapi.json https://rebilly.github.io/RebillyReportsAPI/openapi.json
 ```
