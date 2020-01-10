@@ -1,10 +1,14 @@
-#!/usr/bin/env node
-
 const fetch = require('node-fetch');
 const fs = require('fs');
 const assert = require('assert');
 
 const { jsonDiff } = require('./diff');
+const noop = () => {}
+
+let logger = {
+  log: noop,
+  error: noop
+};
 
 const OPENAPI3_COMPONENTS = [
   'schemas',
@@ -22,7 +26,7 @@ async function loadSpecs(specs) {
   try {
     return await Promise.all(
       specs.map(async specUrl => {
-        console.error(`Loading "${specUrl}"`);
+        logger.error(`Loading "${specUrl}"`);
         if (/^https?:\/\//i.test(specUrl)) {
           return (await fetch(specUrl)).json();
         } else {
@@ -31,7 +35,7 @@ async function loadSpecs(specs) {
       })
     );
   } catch (e) {
-    console.error('Failed to load specs:', e.message);
+    logger.error('Failed to load specs:', e.message);
     process.exit(1);
   }
 }
@@ -42,14 +46,14 @@ function mergeStrictEqual(dest, src, type, srcName) {
       try {
         assert.deepStrictEqual(src[name], dest[name]);
       } catch (e) {
-        console.error(
+        logger.error(
           jsonDiff(
             src[name],
             dest[name],
             `${type} "${name}" from <${srcName}> expected to strictly deep-equal already existing ${type.toLowerCase()}`
           )
         );
-        console.error('');
+        logger.error('');
       }
     } else {
       dest[name] = src[name];
@@ -70,7 +74,7 @@ async function combineSpecs(urls) {
     const spec = specs[i];
     const specUrl = urls[i];
     if (getSpecVersion(specs[i]) !== oasVersion) {
-      console.error(
+      logger.error(
         'Specs has different versions: ' + oasVersion + ' and ' + getSpecVersion(specs[i])
       );
     }
@@ -120,35 +124,17 @@ function getSpecVersion(spec) {
 async function run(argv) {
   const urls = [argv.baseSpec, ...(argv.specs || [])];
   const merged = await combineSpecs(urls);
+  logger = console
   if (argv.output) {
     fs.writeFileSync(argv.output, JSON.stringify(merged, null, 2));
-    console.error(`Merged successfully to "${argv.output}"`);
+    logger.error(`Merged successfully to "${argv.output}"`);
   } else {
-    console.log(JSON.stringify(merged, null, 2));
-    console.error('Merged succesfully to STDOUT');
+    logger.log(JSON.stringify(merged, null, 2));
+    logger.error('Merged succesfully to STDOUT');
   }
 }
 
-const argv = require('yargs').command('* <baseSpec> [specs...]', '', argv => {
-  argv
-    .positional('baseSpec', {
-      description: 'Base spec URL',
-      type: 'string',
-      require: true,
-    })
-    .positional('specs', {
-      description: 'List of spec URLs to merge',
-      type: 'string',
-    })
-    .option('output', {
-      alias: 'o',
-      type: 'string',
-      description: 'Output filename, by default stdout will be used',
-    });
-}).argv;
-
-if (require.main === module) {
-  run(argv);
+module.exports = {
+  run,
+  combineSpecs
 }
-
-module.combineSpecs = combineSpecs;
